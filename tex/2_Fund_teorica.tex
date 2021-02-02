@@ -1,12 +1,53 @@
 \section{Origem dos dados}
+Os dados utilizados neste projeto são de aceleração, velocidade angular e campo magnético, mensurados por meio do módulo MPU9250 inserido no dispositivo da caixa preta, que que por sua vez utilizando do Arduíno Mega 2560 realiza a leitura, armazenamento e transmissão dos dados para o computador via porta serial USB.
+
+Juntamente com a aquisição e transmissão do dados brutos dos sensores, o dispositivo da caixa preta também é responsável por realizar calibrações, auto testes, armazenar e transmitir dados de ajustes necessários para o correto uso dos sensores.
+
+    \subsection{Unidade de Medida Inercial - IMU}
+    \acrshort{IMU} (\acrlong{IMU}) é um modulo eletrônico que agreda dois ou mais sensores para capturar o movimento de um corpo, estes sensores podem ser acelerômetro, giroscópio, bússola, altímetro, barômetro e outros, como por exemplo o AltIMU-10 que estende as capacidades do MPU9250 com a adição de um sensor de altímetro. Por serem sensores que realizam medidas por meio de inercia, isso é, medindo a reação do corpo à forças externas, está sujeito a bastante ruido e erro acumulado (também chamado de drift), uma vez que, a medida é realizada relativo a si próprio e não a um referencial externo como o GPS, entretanto em um período curto de tempo possui grande acurácia. Por esse motivo os dados de um \acrshort{IMU} são utilizados em conjunto para obtenção de um dado mais preciso no curto e longo prazo (técnica conhecida como  fusão de dados).
+    
+    O módulo MPU9250 é um \acrshort{IMU}, que possui os sensores de acelerômetro e giroscópio, para medida de aceleração e velocidade angular nos 3 eixos. E também um sensor externo de magnetômetro de 3 eixos anexado ao mesmo chip.
+    
+    Cada sensor neste \acrshort{IMU} é um micro-sistema eletrônico, conhecido como \acrshort{MEMS} (\acrlong{MEMS}), que é uma miniaturização para escala micro de um sistema eletro-mecânico.
+    
+    \subsection{Acelerômetro}
+    \figura[!h]{MEMS_acel}{MEMS acelerômetro \cite{nedelkovski_mems_2015}}{MEMS_acel}{width=0.5\textwidth}%
+    
+    o \acrshort{MEMS} do acelerômetro presente no MPU9250 possui uma massa de prova presa por molas, que permitem que a massa se mova induzida por reação a uma força de aceleração imposta sobe um eixo. Preso a esta massa estão algumas placas que se aproximam e se afastam de placas fixas anexadas ao frame do sensor, alterando assim as capacitâncias C1 e C2 que podem ser medidas, como na \refFig{MEMS_acel}. Sendo assim é possível medir a aceleração em um eixo, para os demais eixos somente é repetido o mecanismo, com uma massa de prova para cada eixo \cite{nedelkovski_mems_2015, invensense_mpu-9250_2016}. O sentido e direção dos eixos são conforme a \refFig{orientation_gyro_acel}.
+    
+    \figura[!h]{orientation_gyro_acel}{Orientação do sensor giroscôpio e acelerômetro \cite{invensense_mpu-9250_2016}}{orientation_gyro_acel}{width=0.5\textwidth}%
+    
+    Cada sensor possui um sigma-delta ADC de 16bits próprio, modulando e entregando o sinal em escala relativa a gravidade, podendo ser configurado para os intervalos de ±2g, ±4g, ±8g, ou ±16g. Para este projeto iremos utilizar o intervalo de ±2g por ser mais preciso e, a principio nenhum movimento realizado manualmente irá extrapolar esse valor, talvez em uma colisão real extrapole, mas ainda carece de estudos.
+    
+    Estando o sensor em repouso sobe um plano, deverá ele medir +1g, ou seja, deverá identificar somente o vetor gravitacional. Entretanto devido a ruídos e drifts isso não ocorre, sendo necessário realizar uma rápida calibragem para remover o máximo de drift possível, obtendo assim um valor de offset que pode ser subtraído dos valores lidos do sensor. Esta calibragem pode ser efetuada uma única vez após o modulo ser soldado no dispositivo.
+    
+    Sendo assim para obter o valor da aceleração em $m/s^2$ de uma leitura do sensor, basta converter os 16bits do ADC utilizando a escala configurada e subtrair o valor de offset calculado na calibração.
+
+    \equacao{acel}{A_x = \frac{a_x * 2 * 9,8}{32767} - off_{Ax}}
+    
+    onde $A_x$ é a aceleração no eixo $x$ em $m/s^2$, $a_x$ é o inteiro de 16bits em complemento de 2 retornado pelo ADC e $off_{Ax}$ é o offset calculado para o eixo $x$
+    
+    O mesmo pode ser feito para os demais eixos ou em formato de vetor.
+
+    \subsection{Giroscópio}
+    \textcolor{red}{É IMU dentro do MPU9250, apresentar funcionamento básico, formato de saída do dado, eixos e calibração}
+    
+    \subsection{Magnetômetro}
+    \textcolor{red}{É um sensor a parte integrado ao MPU, apresentar funcionamento básico, formato de saída do dado, eixos e calibração}
+    
+    \subsection{Formato dos dados}
+    \textcolor{red}{Apresentar que os dados já vem com os fatores de calibração feitos, e o formato padrão lido}
+    
 \section{Matriz de rotação}
+    \subsection{Rotação 2D}
+    \subsection{Rotação 3D}
     \subsection{Gimbal Lock}
 \section{Quaternions}
 \section{Estimativas de inclinação}
     \subsection{Usando Aceleração}
     \subsection{Usando Velocidade de Rotação}
     \subsection{Usando Magnetômetro}
-
+\section{Filtro de Média Móvel}
 \section{Filtro Complementar}
 \section{Filtro de Kalman}
 \section{Filtro de Madgwick}

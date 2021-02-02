@@ -1,0 +1,44 @@
+Durante o decorrer da primeira metade do trabalho de conclusão de curso (TCC 1), foi realizado a construção parcial do dashboard, levantamento bibliográfico e implementação parcial dos métodos de estimativa de inclinação. Para isso também foi necessário o tratamento dos dados de entrada.
+
+\section{Tratamento dos dados}
+Utilizando de dados de calibração e as fórmulas indicadas no manual de especificação do MPU9250, os dados originados pelos sensores são convertidos para as devidas unidades de medidas e escalas. Os dados são recebidos no formato numérico de 16bits com sinal, em forma de string ASCII por meio da porta USB do computador ou por arquivo texto. Posteriormente são convertidos para o tipo numérico do matlab, realizado o ajuste para escala utilizada pelo sensor e, corrigido o offset usando dados obtidos previamente por meio da calibração dos sensores.
+
+O último tratamento de dado realizado é a média móvel dos dados, objetivando suavizar os erros de leitura do sensor.  
+
+\section{Métodos de estimativa}
+Durante o decorrer do projeto foi realizado o levantamento de métodos para estimativa de inclinação, que fizessem uso dos dados da Caixa Preta. Até o momento foram selecionados 5 métodos.
+
+A primeira forma e mais simples delas, é a integração da velocidade angular, dado pelo sensor de giroscópio. Entretanto como estamos falando de integrar o dado no tempo, erros de leitura e offset causam erros nas estimativas. Também chamados de drift, esses erros levam o dado para uma constante adição de um valor errado na estimativa, tendendo ao infinito. Contudo é uma forma de estimação que gera ótimo resultado em curtos intervalos de tempo.
+
+A segunda forma é inferindo a inclinação por meio do acelerômetro e do magnetômetro. O acelerômetro contribui para a estimativa de inclinações de pitch e roll, isto é, rotações realizadas nos eixos que não ao eixo radial em relação ao centro da terra. Para isso é considerado que o vetor gravitacional sempre aponta para o eixo Z do sensor, logo o método calcula qual a variação de ângulo do eixo Z do sensor para o eixo que aparece o vetor gravitacional no momento. Este método gera ótimo resultado em longos intervalos de tempo, entretanto o corpo deve estar em inércia \cite{pedley_tilt_nodate}.
+
+Já o magnetômetro contribui para a estimativa de inclinação de yaw, isto é, rotações realizadas no eixo radial em relação ao centro da terra. Para isso o sensor deve estar calibrado e longe de objetos que gerem campo magnético, para que seja possível identificar os polos magnéticos da terra e determinar a inclinação do corpo. Como o polo magnético da terra possui malha complexa, não apontando para o polo geográfico sempre, este método somente é útil em curtos espaços de deslocamento e é de difícil uso para orientação global. \cite{ozyagcilar_implementing_nodate, bleything_how_nodate}
+
+O terceiro método faz uso de todos os dois já citados, conhecido como filtro complementar. É classificado como um método de fusão de dados, uma vez que realiza o cruzamento dos dois dados para gerar um dado de maior precisão.
+
+O filtro complementar é o mais simples dos métodos de fusão de dados, uma vez que ele consiste em uma média ponderada dos ângulos, onde o fator de ponderação é complementar, isso significa que a soma dos pesos é sempre 1. De modo geral sempre se utiliza o peso menor para os dados estimados com o acelerômetro, uma vez que ele possui maior acurácia ao longo do tempo, já o giroscópio atua corrigindo momentaneamente o dado, tendo assim o peso maior. \cite{brian_douglas_drone_2018, matlab_understanding_2019-1}
+
+Outro filtro que também pode ser utilizado para fusão de dados é o filtro de kalman. Ele é um filtro iterativo de uso genérico, podendo ser usado em tempo contínuo ou discreto. Sua principal função está em otimizar a covariância de vários dados por meio de fusão de dados e, também permitir o cálculo de um ou mais modelos diretamente no método, bastando configurar corretamente os parâmetros, em formato de matrizes. \cite{aguirre_filtro_2019, matlab_understanding_2017}
+
+Como quarto método foi selecionado uma das possíveis aplicações do filtro de kalman, na qual o modelo retorna a estimativa de inclinação utilizando o giroscópio. Desta forma o modelo recebe como entrada para estimativa, o offset do giroscópio e os dados do giroscópio, retornando assim uma estimativa de inclinação. E recebe como entrada para fusão os dados de inclinação estimados utilizando o acelerômetro. Esta abordagem utilizando o filtro de kalman é exatamente igual ao filtro complementar, entretanto aqui o método é capaz de definir os pesos de forma automática com o decorrer das iterações. O maior desafio aqui encontra-se em acertar a matriz de covariância de cada medida (inclinação usando acelerômetro e do giroscópio). \cite{kelly_kalman_2017, ferdinando_embedded_2012}
+
+Como quinto método foi selecionado o filtro de madgwick, que atua semelhante ao filtro de kalman, entretanto utilizando de quaternions, o que reduz as operações com matrizes de rotação em operações vetoriais. Sendo assim, um método muito mais leve computacionalmente e mais rápido. \cite{sanket_madgwick_nodate}
+
+\section{Dashboard com visualização dos dados}
+
+Durante o TCC1, foi construído parcialmente o dashboard, nele já se encontra todos os métodos supracitados, com parâmetros facilmente ajustáveis.
+
+Dentre as funcionalidades do painel se encontram:
+\begin{itemize}
+  \item A possibilidade de obter dados diretamente da Caixa Preta por meio da porta USB, ou por meio de um arquivo em mesmo formato;
+  \item A possibilidade de visualizar os dados computados em tempo real, ou somente após processado todos os dados;
+  \item O ajuste de parâmetros de cada método;
+  \item A seleção de qual método e visualização se deseja ver na execução do código;
+  \item A organização dos gráficos na interface gráfica;
+  \item O intervalo de tempo que se deseja ver nos gráficos exibidos;
+  \item A visualização dos métodos de estimativa de inclinação em formato de gráficos, ou em tempo real com a animação da rotação de um veículo;
+\end{itemize}
+
+\figura[!h]{dashboard}{Imagem da visualização do painel, configurado com 4 linhas e 3 colunas, com dados de aceleração, giroscópio, magnetômetro, estimativas de inclinação e animação de inclinação}{dashboard}{width=1\textwidth}%
+
+O programa foi construído em 3 frentes distintas, uma parte que realiza a leitura dos dados via arquivo ou porta USB, outra que realiza os cálculos, e uma última que simplifica a interface de plotagem do matlab. Sendo o loop principal responsável por chamar a camada de leitura, realizar os cálculos e chamar a camada de plotagem. No \refApendice{Apendice_main} se encontra um fluxograma do programa, abstraído dos módulos de leitura e renderização.
